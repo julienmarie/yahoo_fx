@@ -11,9 +11,20 @@ defmodule YahooFx do
 
   def handle_fetch_response({:ok, %{status_code: 200, body: body}}) do {:ok, body} end
   def handle_fetch_response({_,   %{status_code: ___, body: body}}) do {:error, body} end
+  def handle_fetch_response(_) do {:error, "error"} end
+ 
+
+  def parse_fetched({:ok, "N/A,N/A,N/A,N/A\n"}) do
+       {:ok, :error}
+  end
+
 
   def parse_fetched({:ok, body}) do
     Regex.named_captures(~r{\"(?<text>[^\"]+)\"\,(?<rate>[0-9\.]+)\,\"(?<date>[^\"]+)\"\,\"(?<time>[^\"]+)\"}, body)
+  end
+
+  def convert_types({:ok, :error}) do
+    %{:datetime=> "NA", :rate =>"NA", :text => "NA"}
   end
 
   def convert_types(map_with_strings) do
@@ -34,6 +45,11 @@ defmodule YahooFx do
 
   """
   def rate(first, second) do
-    fetch(first, second) |> parse_fetched |> convert_types
+    f =  fetch(first, second)
+    case f do
+      {:ok, _} -> f |> parse_fetched |> convert_types
+      _ ->  %{:datetime=> "NA", :rate =>"NA", :text => "NA"}
+    end
   end
+
 end
